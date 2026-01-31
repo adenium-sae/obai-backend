@@ -2,6 +2,7 @@
 
 namespace App\Services;
 
+use App\Events\MessageSent;
 use App\Models\Conversation;
 use App\Models\Message;
 use Gemini\Laravel\Facades\Gemini;
@@ -19,9 +20,11 @@ class ChatService
                     "MENSAJE DEL USUARIO: " . $userMessage;
         $response = Gemini::generativeModel('gemini-2.5-flash')->generateContent($fullPrompt);
         $aiResponse = $response->text();
-        return $conversation->messages()->create([
+        $message = $conversation->messages()->create([
             'role' => 'assistant',
             'content' => $aiResponse
         ]);
+        broadcast(new MessageSent($message))->toOthers();
+        return $message;
     }
 }
